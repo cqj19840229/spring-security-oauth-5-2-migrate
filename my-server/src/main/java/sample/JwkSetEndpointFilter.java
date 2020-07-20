@@ -32,7 +32,7 @@ import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 public class JwkSetEndpointFilter extends OncePerRequestFilter {
-	static final String DEFAULT_JWK_SET_URI = "/oauth2/jwks";
+	public static final String DEFAULT_JWK_SET_URI = "/oauth2/jwks";
 	private final RequestMatcher requestMatcher = new AntPathRequestMatcher(DEFAULT_JWK_SET_URI, GET.name());
 	private final JWKSet jwkSet;
 

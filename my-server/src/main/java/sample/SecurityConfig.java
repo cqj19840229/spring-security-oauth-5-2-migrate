@@ -30,19 +30,29 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configuration.oauth2.server.authorization.OAuth2AuthorizationServerSecurity;
 import org.springframework.security.config.annotation.web.configurers.DefaultLoginPageConfigurer;
+import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @EnableWebSecurity
 @Configuration
@@ -85,37 +95,147 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		  return registeredClientRepository;
 	}
 
-
-
-
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
+		http
+				.cors()
+				.and()
+				.csrf()
+				.disable()
+				.authorizeRequests()
+				.antMatchers("/", "/home", "/login").permitAll()
+//				.antMatchers("/", "/home", "/login", "/oauth2/**").permitAll()
+				.anyRequest()
+				.authenticated()
+				.and()
+				.oauth2Login(oauth2 -> oauth2
+						.loginPage("/login"))
+				.apply(new OAuth2AuthorizationServerConfigurer());
+			//	.and()
+			//	.sessionManagement()
+			//	.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
-		//OAuth2AuthorizationService authorizationService = new InMemoryOAuth2AuthorizationService();
-//		OAuth2AuthorizationServerConfigurer oAuth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer<>();
-//		oAuth2AuthorizationServerConfigurer.configure(http);
-		//oAuth2AuthorizationServerConfigurer.registeredClientRepository(registeredClientRepository();
-		//oAuth2AuthorizationServerConfigurer.authorizationService(authorizationService);
-		//http.removeConfigurer()
-		//http.oauth2Login().and().
-		http.authorizeRequests(authorizeRequests ->
-				 				authorizeRequests
-									.anyRequest().authenticated()
-							).apply(new OAuth2AuthorizationServerConfigurer());
-							//).apply(oAuth2AuthorizationServerConfigurer);
-	 			//.oauth2Client(withDefaults());
-//		http
-//				.oauth2Client(oauth2 -> oauth2
-//						.clientRegistrationRepository(this.clientRegistrationRepository())
-//						.authorizedClientRepository(this.authorizedClientRepository())
-//						.authorizedClientService(this.authorizedClientService())
-//						.authorizationCodeGrant(codeGrant -> codeGrant
-//								.authorizationRequestRepository(this.authorizationRequestRepository())
-//								.authorizationRequestResolver(this.authorizationRequestResolver())
-//								.accessTokenResponseClient(this.accessTokenResponseClient())
-//						)
-//				);
+		//http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+
+//		CustomSecurityAttributeTO security = customYmlConfig.getSecurity();
+//		AntMatchersPOJO antMatchers = security.getAntMatchers();
+//		String[] permitAll = antMatchers.getPermitAll();
+//		List<InterceptPOJO> intercepts = antMatchers.getIntercept();
+
+		//登录
+//		http.httpBasic().and()
+//				//认证
+//				.authorizeRequests()
+//				//.antMatchers("/", "/home", "/login", "/oauth2/**")
+//				//.permitAll()
+//				.and()
+//				//关闭跨站维护
+//				.csrf().disable()
+//				//.apply(validateCodeSecurityConfig)
+//				//.and()
+//				.apply(new OAuth2AuthorizationServerConfigurer());
+
+
+//		ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry config = http.authorizeRequests();
+
+//		if (CollectionUtils.isNotEmpty(intercepts)) {
+//			for (InterceptPOJO intercept : intercepts) {
+//				config.antMatchers(intercept.getHttpMethod(), intercept.getUrl()).
+//						hasRole(intercept.getRole());
+//			}
+//		}
+//		config.anyRequest()//任何请求
+//				.authenticated();//都需要身份认证
 	}
+
+
+//	@Override
+//	protected void configure(HttpSecurity http) throws Exception {
+////		http
+////				.authorizeRequests(authorize -> authorize
+////						.anyRequest().authenticated()
+////				)
+////				.oauth2Login(withDefaults());
+//
+//		http
+//				.requestMatchers()
+//				//.antMatchers("/", "/home", "/login", "/oauth2/**")
+//				.antMatchers("/", "/home", "/login")
+//				.and()
+//				.authorizeRequests()
+//				.anyRequest().permitAll()
+//				.and()
+//				.oauth2Login(oauth2 -> oauth2
+//						.loginPage("/login"))
+//				.apply(new OAuth2AuthorizationServerConfigurer());
+//
+////				http.authorizeRequests(authorizeRequests ->
+////						authorizeRequests
+////								.anyRequest().authenticated()
+////				).apply(new OAuth2AuthorizationServerConfigurer());
+//	}
+
+
+
+
+//	@Override
+//	protected void configure(HttpSecurity http) throws Exception {
+//		http
+////				.requestMatchers()
+////				// 必须登录过的用户才可以进行 oauth2 的授权码申请
+////				.antMatchers("/", "/home", "/login", "/oauth2/**")
+////				// .antMatchers("/", "/home", "/login", "/oauth/authorize")
+////				.and()
+////				.authorizeRequests()
+////				.anyRequest().permitAll()
+////				.and()
+//				.formLogin()
+//				.loginPage("/login")
+//				//.and()
+//				//.httpBasic()
+//				//.disable()
+//				//.exceptionHandling()
+//				//.accessDeniedPage("/login?authorization_error=true")
+//				.and()
+//				// TODO: put CSRF protection back into this controller
+//				.csrf()
+//				.requireCsrfProtectionMatcher(new AntPathRequestMatcher("/oauth2/authorize"))
+//				.disable()
+//
+//				.authorizeRequests(authorizeRequests ->
+//						authorizeRequests
+//								.anyRequest().authenticated()
+//				).apply(new OAuth2AuthorizationServerConfigurer())
+//
+//		;
+//		;
+//
+//		//OAuth2AuthorizationService authorizationService = new InMemoryOAuth2AuthorizationService();
+////		OAuth2AuthorizationServerConfigurer oAuth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer<>();
+////		oAuth2AuthorizationServerConfigurer.configure(http);
+//		//oAuth2AuthorizationServerConfigurer.registeredClientRepository(registeredClientRepository();
+//		//oAuth2AuthorizationServerConfigurer.authorizationService(authorizationService);
+//		//http.removeConfigurer()
+////		http.oauth2Login().and()
+////		.authorizeRequests(authorizeRequests ->
+////				 				authorizeRequests
+////									.anyRequest().authenticated()
+////							).apply(new OAuth2AuthorizationServerConfigurer());
+//							//).apply(oAuth2AuthorizationServerConfigurer);
+//	 			//.oauth2Client(withDefaults());
+////		http
+////				.oauth2Client(oauth2 -> oauth2
+////						.clientRegistrationRepository(this.clientRegistrationRepository())
+////						.authorizedClientRepository(this.authorizedClientRepository())
+////						.authorizedClientService(this.authorizedClientService())
+////						.authorizationCodeGrant(codeGrant -> codeGrant
+////								.authorizationRequestRepository(this.authorizationRequestRepository())
+////								.authorizationRequestResolver(this.authorizationRequestResolver())
+////								.accessTokenResponseClient(this.accessTokenResponseClient())
+////						)
+////				);
+//	}
 
 
 	//	@Override
@@ -126,5 +246,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	private JWKSet generateJwkSet() throws JOSEException {
 		JWK jwk = new RSAKeyGenerator(2048).keyID("minimal-ASA").keyUse(KeyUse.SIGNATURE).generate();
 		return new JWKSet(jwk);
+	}
+
+	@Bean
+	public UserDetailsService users() {
+		UserDetails user = User.withDefaultPasswordEncoder()
+				.username("user1")
+				.password("password")
+				.roles("USER")
+				.build();
+		return  new InMemoryUserDetailsManager(user);
 	}
 }

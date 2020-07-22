@@ -14,12 +14,6 @@
 <form th:action="@{/login}" method="post">
     <div><label> User Name : <input type="text" name="username" value="user"/> </label></div>
     <div><label> Password: <input type="password" name="password" value="123456"/> </label></div>
-    <div>
-        <input type="hidden" id="clientId" name="clientId" th:value="messaging-client"/>
-        <i class="fa fa-check-square"  >
-            <label><input name="scope" type="checkbox" value="message.read" />读消息 </label>
-            <label><input name="scope" type="checkbox" value="message.write" />写消息 </label>
-        </i></div>
     <div><input type="submit" value="Sign In"/></div>
 </form>
 </body>

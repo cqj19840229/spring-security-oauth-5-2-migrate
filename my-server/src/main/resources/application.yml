@@ -36,8 +36,9 @@ spring:
             scope: message.read,message.write
         provider:
           bonc:
-            authorization-uri: http://localhost:8090/auth2/auth
-            token-uri: http://auth-localhost:8090/auth2/token
+            authorization-uri: http://localhost:8090/oauth2/authorize
+            #authorization-uri: http://localhost:8090/auth2/auth
+            token-uri: http://auth-localhost:8090/oauth2/token
 
 messages:
   base-uri: http://localhost:8092/messages

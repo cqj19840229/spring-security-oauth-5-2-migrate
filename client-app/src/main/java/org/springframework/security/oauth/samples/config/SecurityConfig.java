@@ -48,11 +48,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.authorizeRequests()
 				.anyRequest().authenticated()
 				.and()
-			.formLogin()
-				.loginPage("/login")
-				.failureUrl("/login-error")
-				.permitAll()
-				.and()
+//			.formLogin()
+//				.loginPage("/login")
+//				.failureUrl("/login-error")
+//				.permitAll()
+//				.and()
 			.oauth2Client();
 	}
 	// @formatter:on

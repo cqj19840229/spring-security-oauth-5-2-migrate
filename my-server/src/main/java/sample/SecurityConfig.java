@@ -83,6 +83,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public RegisteredClientRepository registeredClientRepository(){
+		//FilterSecurityInterceptor fsi;
 		  RegisteredClientRepository registeredClientRepository =new InMemoryRegisteredClientRepository(RegisteredClient.withId("test")
 				.clientId("messaging-client")
 				.clientSecret("secrect")
@@ -98,19 +99,32 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http
-				.cors()
-				.and()
-				.csrf()
-				.disable()
 				.authorizeRequests()
 				.antMatchers("/", "/home", "/login").permitAll()
-//				.antMatchers("/", "/home", "/login", "/oauth2/**").permitAll()
 				.anyRequest()
 				.authenticated()
 				.and()
-				.oauth2Login(oauth2 -> oauth2
-						.loginPage("/login"))
-				.apply(new OAuth2AuthorizationServerConfigurer());
+				//.oauth2Login(oauth2->oauth2.loginPage("/login"))
+				.oauth2Login(oauth2->oauth2.loginPage("/login"))
+				.apply(new OAuth2AuthorizationServerConfigurer<>());
+
+//		http
+//				.cors()
+//				.and()
+//				.csrf()
+//				.disable()
+//				.authorizeRequests()
+//				.antMatchers("/", "/home", "/login").permitAll()
+////				.antMatchers("/", "/home", "/login", "/oauth2/**").permitAll()
+//				.anyRequest()
+//				.authenticated()
+//				.and()
+//				.oauth2Login(oauth2 -> oauth2.redirectionEndpoint(redirectionEndpointConfig -> redirectionEndpointConfig.baseUri(""))
+//						.loginPage("/login"))
+//				.apply(new OAuth2AuthorizationServerConfigurer());
+
+
+		///////////////////////////////////////////////////////////////////////////
 			//	.and()
 			//	.sessionManagement()
 			//	.sessionCreationPolicy(SessionCreationPolicy.STATELESS);

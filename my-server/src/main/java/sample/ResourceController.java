@@ -26,4 +26,9 @@ public class ResourceController {
 		return "resource";
 	}
 
+	@GetMapping("/aa")
+	public String aa() {
+		return "aa";
+	}
+
 }

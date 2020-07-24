@@ -57,37 +57,14 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-
-//	@Bean
-//	public AuthenticationManager authenticationManagerBean() throws Exception {
-//	      return super.authenticationManagerBean();
-//	}
-
-		//@Bean
-//	public WebSecurityConfigurer<WebSecurity> defaultOAuth2AuthorizationServerSecurity() {
-//		return new OAuth2AuthorizationServerSecurity();
-//	}
-
-//	http
-//			.csrf().and()
-//				.addFilter(new WebAsyncManagerIntegrationFilter())
-//			.exceptionHandling().and()
-//				.headers().and()
-//				.sessionManagement().and()
-//				.securityContext().and()
-//				.requestCache().and()
-//				.anonymous().and()
-//				.servletApi().and()
-//				.apply(new DefaultLoginPageConfigurer<>()).and()
-//				.logout();
-
 	@Bean
 	public RegisteredClientRepository registeredClientRepository(){
 		//FilterSecurityInterceptor fsi;
 		  RegisteredClientRepository registeredClientRepository =new InMemoryRegisteredClientRepository(RegisteredClient.withId("test")
 				.clientId("messaging-client")
-				.clientSecret("secrect")
-				.redirectUri("http://localhost:8080/authorized")
+				.clientSecret("secret")
+				//.redirectUri("http://localhost:8080/authorized")
+				.redirectUri("http://localhost:8080/client/account/redirect")
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				  .scope("message.read")
 				  .scope("message.write")
@@ -96,72 +73,66 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		  return registeredClientRepository;
 	}
 
+	@Bean
+	public AuthenticationManager authenticationManagerBean() throws Exception {
+		return super.authenticationManagerBean();
+	}
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
+//		RegisteredClientRepository registeredClientRepository =registeredClientRepository();
+//		OAuth2AuthorizationService authorizationService = new InMemoryOAuth2AuthorizationService();
+		OAuth2AuthorizationServerConfigurer oAuth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer<>();
+//		http.setSharedObject(AuthenticationManager.class,authenticationManagerBean());
+//		oAuth2AuthorizationServerConfigurer.setBuilder(http);
+//		oAuth2AuthorizationServerConfigurer.init(http);
+//		oAuth2AuthorizationServerConfigurer.configure(http);
+//		oAuth2AuthorizationServerConfigurer.registeredClientRepository(registeredClientRepository);
+//		oAuth2AuthorizationServerConfigurer.authorizationService(authorizationService);
+
+		//this.ob
+
 		http
+				.csrf().disable()
 				.authorizeRequests()
-				.antMatchers("/", "/home", "/login").permitAll()
-				.anyRequest()
-				.authenticated()
+				//.antMatchers("/", "/home", "/login").permitAll()
+				.anyRequest().authenticated()
 				.and()
-				//.oauth2Login(oauth2->oauth2.loginPage("/login"))
-				.oauth2Login(oauth2->oauth2.loginPage("/login"))
-				.apply(new OAuth2AuthorizationServerConfigurer<>());
+				//.oauth2Login(form->form.loginPage("login").permitAll())
+				.formLogin(form->form.loginPage("/login").permitAll())
+				.apply(oAuth2AuthorizationServerConfigurer);
 
-//		http
-//				.cors()
-//				.and()
-//				.csrf()
-//				.disable()
-//				.authorizeRequests()
-//				.antMatchers("/", "/home", "/login").permitAll()
-////				.antMatchers("/", "/home", "/login", "/oauth2/**").permitAll()
-//				.anyRequest()
-//				.authenticated()
-//				.and()
-//				.oauth2Login(oauth2 -> oauth2.redirectionEndpoint(redirectionEndpointConfig -> redirectionEndpointConfig.baseUri(""))
-//						.loginPage("/login"))
-//				.apply(new OAuth2AuthorizationServerConfigurer());
+		oAuth2AuthorizationServerConfigurer.registeredClientRepository(registeredClientRepository());
 
-
-		///////////////////////////////////////////////////////////////////////////
-			//	.and()
-			//	.sessionManagement()
-			//	.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-
-		//http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-
-
-//		CustomSecurityAttributeTO security = customYmlConfig.getSecurity();
-//		AntMatchersPOJO antMatchers = security.getAntMatchers();
-//		String[] permitAll = antMatchers.getPermitAll();
-//		List<InterceptPOJO> intercepts = antMatchers.getIntercept();
-
-		//登录
-//		http.httpBasic().and()
-//				//认证
-//				.authorizeRequests()
-//				//.antMatchers("/", "/home", "/login", "/oauth2/**")
-//				//.permitAll()
-//				.and()
-//				//关闭跨站维护
-//				.csrf().disable()
-//				//.apply(validateCodeSecurityConfig)
-//				//.and()
-//				.apply(new OAuth2AuthorizationServerConfigurer());
-
-
-//		ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry config = http.authorizeRequests();
-
-//		if (CollectionUtils.isNotEmpty(intercepts)) {
-//			for (InterceptPOJO intercept : intercepts) {
-//				config.antMatchers(intercept.getHttpMethod(), intercept.getUrl()).
-//						hasRole(intercept.getRole());
-//			}
-//		}
-//		config.anyRequest()//任何请求
-//				.authenticated();//都需要身份认证
 	}
+
+	private JWKSet generateJwkSet() throws JOSEException {
+		JWK jwk = new RSAKeyGenerator(2048).keyID("minimal-ASA").keyUse(KeyUse.SIGNATURE).generate();
+		return new JWKSet(jwk);
+	}
+
+	@Bean
+	public UserDetailsService users() {
+		UserDetails user = User.withDefaultPasswordEncoder()
+				.username("user")
+				.password("123456")
+				.roles("USER")
+				.build();
+		return  new InMemoryUserDetailsManager(user);
+	}
+
+	//segmentfault
+//	@Override
+//	public void configure(HttpSecurity http) throws Exception {
+//		http.csrf().disable();
+//		http
+//				.requestMatchers().antMatchers("/oauth/**","/login/**","/logout/**")
+//				.and()
+//				.authorizeRequests()
+//				.antMatchers("/oauth/**").authenticated()
+//				.and()
+//				.formLogin().permitAll(); //新增login form支持用户登录及授权
+//	}
 
 
 //	@Override
@@ -195,48 +166,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 //	@Override
 //	protected void configure(HttpSecurity http) throws Exception {
-//		http
-////				.requestMatchers()
-////				// 必须登录过的用户才可以进行 oauth2 的授权码申请
-////				.antMatchers("/", "/home", "/login", "/oauth2/**")
-////				// .antMatchers("/", "/home", "/login", "/oauth/authorize")
-////				.and()
-////				.authorizeRequests()
-////				.anyRequest().permitAll()
-////				.and()
-//				.formLogin()
-//				.loginPage("/login")
-//				//.and()
-//				//.httpBasic()
-//				//.disable()
-//				//.exceptionHandling()
-//				//.accessDeniedPage("/login?authorization_error=true")
-//				.and()
-//				// TODO: put CSRF protection back into this controller
-//				.csrf()
-//				.requireCsrfProtectionMatcher(new AntPathRequestMatcher("/oauth2/authorize"))
-//				.disable()
 //
-//				.authorizeRequests(authorizeRequests ->
-//						authorizeRequests
-//								.anyRequest().authenticated()
-//				).apply(new OAuth2AuthorizationServerConfigurer())
-//
-//		;
-//		;
-//
-//		//OAuth2AuthorizationService authorizationService = new InMemoryOAuth2AuthorizationService();
-////		OAuth2AuthorizationServerConfigurer oAuth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer<>();
-////		oAuth2AuthorizationServerConfigurer.configure(http);
-//		//oAuth2AuthorizationServerConfigurer.registeredClientRepository(registeredClientRepository();
-//		//oAuth2AuthorizationServerConfigurer.authorizationService(authorizationService);
+//		OAuth2AuthorizationService authorizationService = new InMemoryOAuth2AuthorizationService();
+//		OAuth2AuthorizationServerConfigurer oAuth2AuthorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer<>();
+//		oAuth2AuthorizationServerConfigurer.configure(http);
+//		oAuth2AuthorizationServerConfigurer.registeredClientRepository(registeredClientRepository());
+//		oAuth2AuthorizationServerConfigurer.authorizationService(authorizationService);
 //		//http.removeConfigurer()
-////		http.oauth2Login().and()
-////		.authorizeRequests(authorizeRequests ->
-////				 				authorizeRequests
-////									.anyRequest().authenticated()
-////							).apply(new OAuth2AuthorizationServerConfigurer());
-//							//).apply(oAuth2AuthorizationServerConfigurer);
+//		http.oauth2Login().and()
+//		.authorizeRequests(authorizeRequests ->
+//				 				authorizeRequests
+//									.anyRequest().authenticated()
+//						//	).apply(new OAuth2AuthorizationServerConfigurer());
+//							).apply(oAuth2AuthorizationServerConfigurer);
 //	 			//.oauth2Client(withDefaults());
 ////		http
 ////				.oauth2Client(oauth2 -> oauth2
@@ -257,18 +199,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //		http.addFilterBefore(new JwkSetEndpointFilter(generateJwkSet()), LogoutFilter.class);
 //	}
 
-	private JWKSet generateJwkSet() throws JOSEException {
-		JWK jwk = new RSAKeyGenerator(2048).keyID("minimal-ASA").keyUse(KeyUse.SIGNATURE).generate();
-		return new JWKSet(jwk);
-	}
 
-	@Bean
-	public UserDetailsService users() {
-		UserDetails user = User.withDefaultPasswordEncoder()
-				.username("user1")
-				.password("password")
-				.roles("USER")
-				.build();
-		return  new InMemoryUserDetailsManager(user);
-	}
 }
